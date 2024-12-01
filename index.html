@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>关键词去重工具</title>
+    <style>
+        /* 整体页面样式 */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+
+        .container {
+            width: 500px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        /* 行样式 */
+        .line {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        /* 输入框样式 */
+        .input-box {
+            width: calc(100% - 110px);
+            padding: 10px;
+            font-size: 16px;
+            font-family: 'Arial', sans-serif;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            height: 40px;
+            box-sizing: border-box;
+        }
+         
+            /* 输出框样式 */
+         .output-box {
+            width: calc(100% - 110px);
+            padding: 10px;
+            font-size: 16px;
+            font-family: 'Arial', sans-serif;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            height: 350px;
+            box-sizing: border-box;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+        }
+
+        .btn-clear {
+            background-color: #f44336;
+        }
+
+        .btn-clear:hover {
+            background-color: #d32f2f;
+        }
+
+        .btn-copy {
+            background-color: #008CBA;
+        }
+
+        .btn-copy:hover {
+            background-color: #007bb5;
+        }
+
+        .btn-add {
+            background-color: #8e44ad;
+        }
+
+        .btn-add:hover {
+            background-color: #7d3c96;
+        }
+
+        /* 提示信息样式 */
+        .message {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px;
+            background-color: #f39c12;
+            color: white;
+            border-radius: 5px;
+            font-size: 14px;
+            display: none;
+            z-index: 10;
+        }
+
+        /* 统计信息样式 */
+        .char-count {
+            text-align: center;
+            font-size: 16px;
+        }
+
+        /* 输出框滚动样式 */
+        .output-box {
+            resize: none;
+            overflow-y: auto;
+            width: 100%;
+            font-family: 'Arial', sans-serif;
+            font-size: 16px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>关键词去重工具</h1>
+
+        <!-- 输入行 -->
+        <div class="line">
+            <input type="text" id="inputKeyword" class="input-box" placeholder="请输入关键词" />
+            <button class="btn btn-add" onclick="addKeyword()">添加</button>
+            <button class="btn btn-clear" onclick="clearInput()">清空</button>
+        </div>
+
+        <!-- 输出行 -->
+        <div class="line">
+            <textarea id="outputKeywords" class="output-box" readonly></textarea>
+            <button class="btn btn-copy" onclick="copyOutput()">复制</button>
+            <button class="btn btn-clear" onclick="clearOutput()">清空</button>
+        </div>
+
+        <!-- 字符数统计行 -->
+        <div class="char-count" id="charCount">字符数：0</div>
+    </div>
+
+    <div class="message" id="message"></div>
+
+    <script>
+        // 存储已添加的关键词
+        let addedKeywords = [];
+
+        // 添加关键词
+        function addKeyword() {
+            const input = document.getElementById('inputKeyword');
+            const inputText = input.value.trim();
+
+            if (inputText === "") {
+                showMessage("请输入有效的关键词！");
+                return;
+            }
+
+            // 分割输入文本为多个关键词
+            const keywordsArray = inputText.split(';').map(keyword => keyword.trim()).filter(keyword => keyword.length > 0);
+
+            let duplicateFound = false;  // 标记是否发现重复关键词
+
+            // 检查并添加每个关键词
+            keywordsArray.forEach(keyword => {
+                if (isDuplicate(keyword)) {
+                    duplicateFound = true;
+                } else {
+                    addToOutput(keyword);  // 处理新的关键词
+                }
+            });
+
+            if (duplicateFound) {
+                showMessage("有重复的关键词！");
+            }
+
+            // 更新字符数
+            updateCharCount();
+
+            // 清空输入框
+            input.value = "";
+        }
+
+        // 判断单个关键词是否重复
+        function isDuplicate(keyword) {
+            const formattedKeyword = formatKeyword(keyword);
+            return addedKeywords.includes(formattedKeyword);  // 检查列表中是否已存在该关键词
+        }
+
+        // 格式化关键词，去除多余的分号
+        function formatKeyword(keyword) {
+            // 去除前后空格，去掉多余分号，去除分号与关键字之间的空格
+            let formatted = keyword.trim().replace(/\s*;\s*/g, ";");
+
+            // 去除多余的分号，只保留一个
+            formatted = formatted.replace(/;+$/, "");  // 去掉尾部多余的分号
+            return formatted;
+        }
+
+        // 将关键词添加到输出框
+        function addToOutput(keyword) {
+            let formattedKeyword = formatKeyword(keyword);
+
+            // 如果输出框内容不为空，检查是否以分号结尾，如果没有，则加上一个分号
+            let currentOutput = document.getElementById('outputKeywords').value.trim();
+            if (currentOutput.length > 0 && !currentOutput.endsWith(";")) {
+                currentOutput += ";";
+            }
+
+            // 将新添加的关键词加入输出框
+            currentOutput += formattedKeyword + ";";  // 添加关键词和分号
+            document.getElementById('outputKeywords').value = currentOutput;
+
+            // 更新已添加关键词列表
+            addedKeywords.push(formattedKeyword);
+        }
+
+        // 清空输入框
+        function clearInput() {
+            document.getElementById('inputKeyword').value = "";
+        }
+
+        // 清空输出框
+        function clearOutput() {
+            addedKeywords = [];  // 清空已添加关键词列表
+            document.getElementById('outputKeywords').value = "";
+            updateCharCount();
+        }
+
+        // 更新字符数统计
+        function updateCharCount() {
+            const output = document.getElementById('outputKeywords').value;
+            document.getElementById('charCount').textContent = `字符数：${output.length}`;
+        }
+
+        // 复制输出框内容
+        function copyOutput() {
+            const output = document.getElementById('outputKeywords');
+            output.select();
+            document.execCommand('copy');
+            showMessage("已复制到剪贴板！");
+        }
+
+        // 显示提示信息
+        function showMessage(message) {
+            const msgBox = document.getElementById('message');
+            msgBox.textContent = message;
+            msgBox.style.display = 'block';
+            setTimeout(() => {
+                msgBox.style.display = 'none';
+            }, 3000);  // 提示框显示时间为3秒
+        }
+    </script>
+</body>
+</html>
