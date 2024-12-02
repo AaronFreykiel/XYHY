@@ -37,27 +37,15 @@
             margin-bottom: 10px;
         }
 
-        /* 输入框样式 */
-        .input-box {
+        /* 输入框和输出框样式 */
+        .input-box, .output-box {
             width: calc(100% - 110px);
             padding: 10px;
             font-size: 16px;
             font-family: 'Arial', sans-serif;
             border: 1px solid #ccc;
             border-radius: 4px;
-            height: 40px;
-            box-sizing: border-box;
-        }
-         
-            /* 输出框样式 */
-         .output-box {
-            width: calc(100% - 110px);
-            padding: 10px;
-            font-size: 16px;
-            font-family: 'Arial', sans-serif;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            height: 350px;
+            height: 200px;
             box-sizing: border-box;
         }
 
@@ -118,7 +106,7 @@
         }
 
         /* 统计信息样式 */
-        .char-count {
+        .char-count, .keyword-count {
             text-align: center;
             font-size: 16px;
         }
@@ -130,6 +118,7 @@
             width: 100%;
             font-family: 'Arial', sans-serif;
             font-size: 16px;
+            white-space: pre-wrap; /* 保持换行 */
         }
 
     </style>
@@ -154,6 +143,9 @@
 
         <!-- 字符数统计行 -->
         <div class="char-count" id="charCount">字符数：0</div>
+
+        <!-- 关键词数统计行 -->
+        <div class="keyword-count" id="keywordCount">关键词个数：0</div>
     </div>
 
     <div class="message" id="message"></div>
@@ -190,8 +182,8 @@
                 showMessage("有重复的关键词！");
             }
 
-            // 更新字符数
-            updateCharCount();
+            // 更新字符数和关键词个数
+            updateStats();
 
             // 清空输入框
             input.value = "";
@@ -217,14 +209,14 @@
         function addToOutput(keyword) {
             let formattedKeyword = formatKeyword(keyword);
 
-            // 如果输出框内容不为空，检查是否以分号结尾，如果没有，则加上一个分号
+            // 如果输出框内容不为空，检查是否以换行符结尾，如果没有，则加上一个换行符
             let currentOutput = document.getElementById('outputKeywords').value.trim();
-            if (currentOutput.length > 0 && !currentOutput.endsWith(";")) {
-                currentOutput += ";";
+            if (currentOutput.length > 0 && !currentOutput.endsWith("\n")) {
+                currentOutput += "\n";
             }
 
             // 将新添加的关键词加入输出框
-            currentOutput += formattedKeyword + ";";  // 添加关键词和分号
+            currentOutput += formattedKeyword + "\n";  // 添加关键词和换行符
             document.getElementById('outputKeywords').value = currentOutput;
 
             // 更新已添加关键词列表
@@ -240,21 +232,34 @@
         function clearOutput() {
             addedKeywords = [];  // 清空已添加关键词列表
             document.getElementById('outputKeywords').value = "";
-            updateCharCount();
+            updateStats();
         }
 
-        // 更新字符数统计
-        function updateCharCount() {
+        // 更新字符数和关键词个数统计
+        function updateStats() {
             const output = document.getElementById('outputKeywords').value;
             document.getElementById('charCount').textContent = `字符数：${output.length}`;
+
+            const keywordCount = addedKeywords.length;
+            document.getElementById('keywordCount').textContent = `关键词个数：${keywordCount}`;
         }
 
         // 复制输出框内容
         function copyOutput() {
-            const output = document.getElementById('outputKeywords');
-            output.select();
-            document.execCommand('copy');
-            showMessage("已复制到剪贴板！");
+            let output = document.getElementById('outputKeywords').value.trim();
+            
+            // 将每个关键词之间的换行符替换为分号，并去掉最后的分号
+            output = output.replace(/\n/g, ";").replace(/;$/, "");
+
+            // 将转换后的内容复制到剪贴板
+            navigator.clipboard.writeText(output)
+                .then(() => {
+                    showMessage("已复制到剪贴板！");
+                })
+                .catch(err => {
+                    showMessage("复制失败，请重试！");
+                    console.error("Error copying text: ", err);
+                });
         }
 
         // 显示提示信息
