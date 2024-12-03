@@ -3,20 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>关键词去重</title>
+    <title>关键词去重工具</title>
     <style>
         /* 整体页面样式 */
         body {
             display: flex;
-            justify-content: center;
-            align-items: center;
+            justify-content: space-between;
             height: 100vh;
-            background-color: #f0f0f0;
             margin: 0;
+            background-color: #f0f0f0;
         }
 
+        /* 左侧容器（关键词去重工具部分） */
+        .left-container {
+            width: 50%; /* 左边占页面宽度的一半 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #ffffff;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* 右侧容器（Bing 翻译器） */
+        .right-container {
+            width: 50%; /* 右边占页面宽度的一半 */
+            background-color: #e0e0e0;
+        }
+
+        /* 右侧 iframe 样式 */
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* 关键词去重工具内容容器 */
         .container {
-            width: 500px;
+            width: 100%;
+            max-width: 500px;
             background-color: white;
             padding: 20px;
             border-radius: 8px;
@@ -29,7 +54,6 @@
             margin-bottom: 20px;
         }
 
-        /* 行样式 */
         .line {
             display: flex;
             align-items: flex-start;
@@ -37,7 +61,6 @@
             margin-bottom: 10px;
         }
 
-        /* 输入框和输出框样式 */
         .input-box, .output-box {
             width: calc(100% - 110px);
             padding: 10px;
@@ -49,7 +72,6 @@
             box-sizing: border-box;
         }
 
-        /* 按钮样式 */
         .btn {
             padding: 10px;
             font-size: 16px;
@@ -90,7 +112,6 @@
             background-color: #007bb5;
         }
 
-        /* 提示信息样式 */
         .message {
             position: fixed;
             top: 10px;
@@ -105,13 +126,11 @@
             z-index: 10;
         }
 
-        /* 统计信息样式 */
         .char-count, .keyword-count {
             text-align: center;
             font-size: 16px;
         }
 
-        /* 输出框滚动样式 */
         .output-box {
             resize: none;
             overflow-y: auto;
@@ -124,37 +143,32 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>关键词去重</h1>
-
-        <!-- 输入行 -->
-        <div class="line">
-            <input type="text" id="inputKeyword" class="input-box" placeholder="请输入关键词~" />
-            <button class="btn btn-add" onclick="addKeyword()">添加</button>
-            <button class="btn btn-clear" onclick="clearInput()">清空</button>
+    <div class="left-container">
+        <div class="container">
+            <h1>关键词去重工具</h1>
+            <div class="line">
+                <input type="text" id="inputKeyword" class="input-box" placeholder="请输入关键词~" />
+                <button class="btn btn-add" onclick="addKeyword()">添加</button>
+                <button class="btn btn-clear" onclick="clearInput()">清空</button>
+            </div>
+            <div class="line">
+                <textarea id="outputKeywords" class="output-box" readonly></textarea>
+                <button class="btn btn-copy" onclick="copyOutput()">复制</button>
+                <button class="btn btn-clear" onclick="clearOutput()">清空</button>
+            </div>
+            <div class="char-count" id="charCount">字符数：0</div>
+            <div class="keyword-count" id="keywordCount">关键词个数：0</div>
         </div>
-
-        <!-- 输出行 -->
-        <div class="line">
-            <textarea id="outputKeywords" class="output-box" readonly></textarea>
-            <button class="btn btn-copy" onclick="copyOutput()">复制</button>
-            <button class="btn btn-clear" onclick="clearOutput()">清空</button>
-        </div>
-
-        <!-- 字符数统计行 -->
-        <div class="char-count" id="charCount">字符数：0</div>
-
-        <!-- 关键词数统计行 -->
-        <div class="keyword-count" id="keywordCount">关键词个数：0</div>
+    </div>
+    <div class="right-container">
+        <iframe src="https://www.bing.com/translator/?h_text=msn_ctxt&setlang=zh-cn" frameborder="0"></iframe>
     </div>
 
     <div class="message" id="message"></div>
 
     <script>
-        // 存储已添加的关键词
         let addedKeywords = [];
 
-        // 添加关键词
         function addKeyword() {
             const input = document.getElementById('inputKeyword');
             const inputText = input.value.trim();
@@ -164,20 +178,17 @@
                 return;
             }
 
-            // 使用正则表达式替换中文逗号、英文逗号和中文分号为英文分号
             const formattedInput = inputText.replace(/[，、,；]/g, ";");
 
-            // 按英文分号拆分关键词，并去除多余的空格
             const keywordsArray = formattedInput.split(';').map(keyword => keyword.trim()).filter(keyword => keyword.length > 0);
 
-            let duplicateFound = false;  // 标记是否发现重复关键词
+            let duplicateFound = false;
 
-            // 检查并添加每个关键词
             keywordsArray.forEach(keyword => {
                 if (isDuplicate(keyword)) {
                     duplicateFound = true;
                 } else {
-                    addToOutput(keyword);  // 处理新的关键词
+                    addToOutput(keyword);
                 }
             });
 
@@ -185,60 +196,45 @@
                 showMessage("注意！有重复的关键词！重复的关键词将不会添加！");
             }
 
-            // 更新字符数和关键词个数
             updateStats();
-
-            // 清空输入框
             input.value = "";
         }
 
-        // 判断单个关键词是否重复
         function isDuplicate(keyword) {
             const formattedKeyword = formatKeyword(keyword);
-            return addedKeywords.includes(formattedKeyword);  // 检查列表中是否已存在该关键词
+            return addedKeywords.includes(formattedKeyword);
         }
 
-        // 格式化关键词，去除多余的分号
         function formatKeyword(keyword) {
-            // 去除前后空格，去掉多余分号，去除分号与关键字之间的空格
             let formatted = keyword.trim().replace(/\s*;\s*/g, ";");
-
-            // 去除多余的分号，只保留一个
-            formatted = formatted.replace(/;+$/, "");  // 去掉尾部多余的分号
+            formatted = formatted.replace(/;+$/, "");
             return formatted;
         }
 
-        // 将关键词添加到输出框
         function addToOutput(keyword) {
             let formattedKeyword = formatKeyword(keyword);
 
-            // 如果输出框内容不为空，检查是否以换行符结尾，如果没有，则加上一个换行符
             let currentOutput = document.getElementById('outputKeywords').value.trim();
             if (currentOutput.length > 0 && !currentOutput.endsWith("\n")) {
                 currentOutput += "\n";
             }
 
-            // 将新添加的关键词加入输出框
-            currentOutput += formattedKeyword + "\n";  // 添加关键词和换行符
+            currentOutput += formattedKeyword + "\n";
             document.getElementById('outputKeywords').value = currentOutput;
 
-            // 更新已添加关键词列表
             addedKeywords.push(formattedKeyword);
         }
 
-        // 清空输入框
         function clearInput() {
             document.getElementById('inputKeyword').value = "";
         }
 
-        // 清空输出框
         function clearOutput() {
-            addedKeywords = [];  // 清空已添加关键词列表
+            addedKeywords = [];
             document.getElementById('outputKeywords').value = "";
             updateStats();
         }
 
-        // 更新字符数和关键词个数统计
         function updateStats() {
             const output = document.getElementById('outputKeywords').value;
             document.getElementById('charCount').textContent = `字符数：${output.length}`;
@@ -247,14 +243,10 @@
             document.getElementById('keywordCount').textContent = `关键词个数：${keywordCount}`;
         }
 
-        // 复制输出框内容
         function copyOutput() {
             let output = document.getElementById('outputKeywords').value.trim();
-            
-            // 将每个关键词之间的换行符替换为分号，并去掉最后的分号
             output = output.replace(/\n/g, ";").replace(/;$/, "");
 
-            // 将转换后的内容复制到剪贴板
             navigator.clipboard.writeText(output)
                 .then(() => {
                     showMessage("已复制到剪贴板！");
@@ -265,14 +257,13 @@
                 });
         }
 
-        // 显示提示信息
         function showMessage(message) {
             const msgBox = document.getElementById('message');
             msgBox.textContent = message;
             msgBox.style.display = 'block';
             setTimeout(() => {
                 msgBox.style.display = 'none';
-            }, 3000);  // 提示框显示时间为3秒
+            }, 3000);
         }
     </script>
 </body>
