@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>关键词去重工具</title>
+    <title>关键词去重</title>
     <style>
         /* 整体页面样式 */
         body {
@@ -83,11 +83,11 @@
         }
 
         .btn-add {
-            background-color: #8e44ad;
+            background-color: #008CBA;
         }
 
         .btn-add:hover {
-            background-color: #7d3c96;
+            background-color: #007bb5;
         }
 
         /* 提示信息样式 */
@@ -125,11 +125,11 @@
 </head>
 <body>
     <div class="container">
-        <h1>关键词去重工具</h1>
+        <h1>关键词去重</h1>
 
         <!-- 输入行 -->
         <div class="line">
-            <input type="text" id="inputKeyword" class="input-box" placeholder="请输入关键词" />
+            <input type="text" id="inputKeyword" class="input-box" placeholder="请输入关键词~" />
             <button class="btn btn-add" onclick="addKeyword()">添加</button>
             <button class="btn btn-clear" onclick="clearInput()">清空</button>
         </div>
@@ -164,8 +164,11 @@
                 return;
             }
 
-            // 分割输入文本为多个关键词
-            const keywordsArray = inputText.split(';').map(keyword => keyword.trim()).filter(keyword => keyword.length > 0);
+            // 使用正则表达式替换中文逗号、英文逗号和中文分号为英文分号
+            const formattedInput = inputText.replace(/[，、,；]/g, ";");
+
+            // 按英文分号拆分关键词，并去除多余的空格
+            const keywordsArray = formattedInput.split(';').map(keyword => keyword.trim()).filter(keyword => keyword.length > 0);
 
             let duplicateFound = false;  // 标记是否发现重复关键词
 
@@ -179,7 +182,7 @@
             });
 
             if (duplicateFound) {
-                showMessage("有重复的关键词！");
+                showMessage("注意！有重复的关键词！重复的关键词将不会添加！");
             }
 
             // 更新字符数和关键词个数
