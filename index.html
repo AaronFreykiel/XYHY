@@ -166,105 +166,112 @@
 
     <div class="message" id="message"></div>
 
-    <script>
-        let addedKeywords = [];
+     <script>
+    let addedKeywords = [];
 
-        function addKeyword() {
-            const input = document.getElementById('inputKeyword');
-            const inputText = input.value.trim();
+    function addKeyword() {
+        const input = document.getElementById('inputKeyword');
+        const inputText = input.value.trim();
 
-            if (inputText === "") {
-                showMessage("请输入有效的关键词！");
-                return;
+        if (inputText === "") {
+            showMessage("请输入有效的关键词！");
+            return;
+        }
+
+        const formattedInput = inputText.replace(/[，、,；]/g, ";");
+
+        const keywordsArray = formattedInput.split(';').map(keyword => keyword.trim()).filter(keyword => keyword.length > 0);
+
+        let duplicateFound = false;
+
+        keywordsArray.forEach(keyword => {
+            if (isDuplicate(keyword)) {
+                duplicateFound = true;
+            } else {
+                addToOutput(keyword);
             }
+        });
 
-            const formattedInput = inputText.replace(/[，、,；]/g, ";");
+        if (duplicateFound) {
+            showMessage("注意！有重复的关键词！重复的关键词将不会添加！");
+        }
 
-            const keywordsArray = formattedInput.split(';').map(keyword => keyword.trim()).filter(keyword => keyword.length > 0);
+        updateStats();
+        input.value = "";
+    }
 
-            let duplicateFound = false;
+    function isDuplicate(keyword) {
+        const formattedKeyword = formatKeyword(keyword);
+        return addedKeywords.includes(formattedKeyword);
+    }
 
-            keywordsArray.forEach(keyword => {
-                if (isDuplicate(keyword)) {
-                    duplicateFound = true;
-                } else {
-                    addToOutput(keyword);
-                }
+    function formatKeyword(keyword) {
+        let formatted = keyword.trim().replace(/\s*;\s*/g, ";");
+        formatted = formatted.replace(/;+$/, "");
+        return formatted;
+    }
+
+    function addToOutput(keyword) {
+        let formattedKeyword = formatKeyword(keyword);
+
+        let currentOutput = document.getElementById('outputKeywords').value.trim();
+        if (currentOutput.length > 0 && !currentOutput.endsWith("\n")) {
+            currentOutput += "\n";
+        }
+
+        currentOutput += formattedKeyword + "\n";
+        document.getElementById('outputKeywords').value = currentOutput;
+
+        addedKeywords.push(formattedKeyword);
+    }
+
+    function clearInput() {
+        document.getElementById('inputKeyword').value = "";
+    }
+
+    function clearOutput() {
+        addedKeywords = [];
+        document.getElementById('outputKeywords').value = "";
+        updateStats();
+    }
+
+    function updateStats() {
+        const output = document.getElementById('outputKeywords').value;
+        document.getElementById('charCount').textContent = `字符数：${output.length}`;
+
+        const keywordCount = addedKeywords.length;
+        document.getElementById('keywordCount').textContent = `关键词个数：${keywordCount}`;
+    }
+
+    function copyOutput() {
+        // 1. 获取输出区域的内容并清理首尾空白
+        let output = document.getElementById('outputKeywords').value.trim();
+
+        // 2. 替换换行符为分号+空格
+        output = output.replace(/\n/g, "; ");
+
+        // 3. 去除末尾可能多余的分号+空格
+        output = output.replace(/; $/, "");
+
+        // 4. 复制到剪贴板
+        navigator.clipboard.writeText(output)
+            .then(() => {
+                showMessage("已复制到剪贴板！");
+            })
+            .catch(err => {
+                showMessage("复制失败，请重试！");
+                console.error("Error copying text: ", err);
             });
+    }
 
-            if (duplicateFound) {
-                showMessage("注意！有重复的关键词！重复的关键词将不会添加！");
-            }
-
-            updateStats();
-            input.value = "";
-        }
-
-        function isDuplicate(keyword) {
-            const formattedKeyword = formatKeyword(keyword);
-            return addedKeywords.includes(formattedKeyword);
-        }
-
-        function formatKeyword(keyword) {
-            let formatted = keyword.trim().replace(/\s*;\s*/g, ";");
-            formatted = formatted.replace(/;+$/, "");
-            return formatted;
-        }
-
-        function addToOutput(keyword) {
-            let formattedKeyword = formatKeyword(keyword);
-
-            let currentOutput = document.getElementById('outputKeywords').value.trim();
-            if (currentOutput.length > 0 && !currentOutput.endsWith("\n")) {
-                currentOutput += "\n";
-            }
-
-            currentOutput += formattedKeyword + "\n";
-            document.getElementById('outputKeywords').value = currentOutput;
-
-            addedKeywords.push(formattedKeyword);
-        }
-
-        function clearInput() {
-            document.getElementById('inputKeyword').value = "";
-        }
-
-        function clearOutput() {
-            addedKeywords = [];
-            document.getElementById('outputKeywords').value = "";
-            updateStats();
-        }
-
-        function updateStats() {
-            const output = document.getElementById('outputKeywords').value;
-            document.getElementById('charCount').textContent = `字符数：${output.length}`;
-
-            const keywordCount = addedKeywords.length;
-            document.getElementById('keywordCount').textContent = `关键词个数：${keywordCount}`;
-        }
-
-        function copyOutput() {
-            let output = document.getElementById('outputKeywords').value.trim();
-            output = output.replace(/\n/g, ";").replace(/;$/, "");
-
-            navigator.clipboard.writeText(output)
-                .then(() => {
-                    showMessage("已复制到剪贴板！");
-                })
-                .catch(err => {
-                    showMessage("复制失败，请重试！");
-                    console.error("Error copying text: ", err);
-                });
-        }
-
-        function showMessage(message) {
-            const msgBox = document.getElementById('message');
-            msgBox.textContent = message;
-            msgBox.style.display = 'block';
-            setTimeout(() => {
-                msgBox.style.display = 'none';
-            }, 3000);
-        }
-    </script>
+    function showMessage(message) {
+        const msgBox = document.getElementById('message');
+        msgBox.textContent = message;
+        msgBox.style.display = 'block';
+        setTimeout(() => {
+            msgBox.style.display = 'none';
+        }, 3000);
+    }
+</script>
 </body>
 </html>
